@@ -1,6 +1,7 @@
 import requests
 import os
 import base64
+import json
 from dotenv import load_dotenv
 
 # Carregar variáveis do arquivo .env
@@ -19,7 +20,7 @@ payload = {
     "Take": 50,
     "Skip": 0,
     "DataEmissaoInicio": "2024-11-28T00:00:00.000Z",
-    "DataEmissaoFim": "2024-11-28T23:59:59.999Z",
+    "DataEmissaoFim": "2024-11-28T06:59:59.999Z",
     "Downloadevent": True
 }
 #"CnpjEmit": "47488431000102",
@@ -37,9 +38,30 @@ if response.status_code == 200:
     print("Requisição bem-sucedida!")
 
     # Obter o conteúdo Base64 retornado
-    base64_data = response.json()  # Supondo que o JSON tenha o Base64 como string principal
-    print("base64_data| type: ", type(base64_data))
+    base64_data =  response.json()  # Supondo que o JSON tenha o Base64 como string principal
+    #print("base64_data| type: ", type(base64_data))
     # Decodificar o Base64 para bytes
+
+    base64_data_json = json.loads(base64_data)
+
+    if isinstance(base64_data_json, dict):
+        print("O JSON é um dicionário. Chaves disponíveis:")
+        print(base64_data_json.keys())
+    elif isinstance(base64_data_json, list):
+        print("O JSON é uma lista. Tamanho:", len(base64_data_json))
+        print("Primeiro item na lista:", base64_data_json[0] if base64_data_json else "Lista vazia")
+    else:
+        print("Tipo de dado inesperado:", type(base64_data_json))
+
+
+    for item in base64_data_json:
+        print("Primeiro item na lista:", base64_data_json[0] if base64_data_json else "Lista vazia")
+        print("Primeiro item na lista:", base64.b64decode(base64_data_json[0]) if base64_data_json else "Lista vazia")
+        break
+
+
+    
+
     decoded_data = base64.b64decode(base64_data)
 
     # Caminho para salvar o arquivo na pasta \temp
@@ -47,6 +69,7 @@ if response.status_code == 200:
     os.makedirs(temp_dir, exist_ok=True)  # Criar a pasta se ela não existir
     xml_path = os.path.join(temp_dir, "resultado.xml")
     txt_path = os.path.join(temp_dir, "resultado.txt")
+    json_path = os.path.join(temp_dir, "resultado.json")
 
     # Salvar o conteúdo XML no arquivo
     with open(xml_path, "wb") as xml_file:
@@ -57,6 +80,9 @@ if response.status_code == 200:
     with open(txt_path, "w") as txt_file:
         txt_file.write(base64_data)
     
+    with open(json_path, "w") as file:
+        json.dump(base64_data, file)
+
     print("O XML foi salvo no arquivo 'resultado.txt'.")
 
 else:
