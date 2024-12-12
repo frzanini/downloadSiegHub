@@ -19,8 +19,8 @@ payload = {
     "XmlType": 1,
     "Take": 50,
     "Skip": 0,
-    "DataEmissaoInicio": "2024-11-28T00:00:00.000Z",
-    "DataEmissaoFim": "2024-11-28T06:59:59.999Z",
+    "DataEmissaoInicio": "2024-12-11T00:00:00.000Z",
+    "DataEmissaoFim": "2024-12-11T23:59:59.999Z",
     "Downloadevent": True
 }
 #"CnpjEmit": "47488431000102",
@@ -49,14 +49,14 @@ if response.status_code == 200:
         print(base64_data_json.keys())
     elif isinstance(base64_data_json, list):
         print("O JSON é uma lista. Tamanho:", len(base64_data_json))
-        print("Primeiro item na lista:", base64_data_json[0] if base64_data_json else "Lista vazia")
+        #print("Primeiro item na lista:", base64_data_json[0] if base64_data_json else "Lista vazia")
     else:
         print("Tipo de dado inesperado:", type(base64_data_json))
 
 
     for item in base64_data_json:
-        print("Primeiro item na lista:", base64_data_json[0] if base64_data_json else "Lista vazia")
-        print("Primeiro item na lista:", base64.b64decode(base64_data_json[0]) if base64_data_json else "Lista vazia")
+        #print("Primeiro item na lista:", base64_data_json[0] if base64_data_json else "Lista vazia")
+        #print("Primeiro item na lista:", base64.b64decode(base64_data_json[0]) if base64_data_json else "Lista vazia")
         break
 
 
