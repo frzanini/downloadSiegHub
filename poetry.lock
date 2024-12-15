@@ -1280,6 +1280,17 @@ files = [
 ]
 
 [[package]]
+name = "xmltodict"
+version = "0.14.2"
+description = "Makes working with XML feel like you are working with JSON"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "xmltodict-0.14.2-py2.py3-none-any.whl", hash = "sha256:20cc7d723ed729276e808f26fb6b3599f786cbc37e06c65e192ba77c40f20aac"},
+    {file = "xmltodict-0.14.2.tar.gz", hash = "sha256:201e7c28bb210e374999d1dde6382923ab0ed1a8a5faeece48ab525b7810a553"},
+]
+
+[[package]]
 name = "xsdata"
 version = "24.11"
 description = "Python XML Binding"
@@ -1303,4 +1314,4 @@ test = ["pre-commit", "pytest", "pytest-benchmark", "pytest-cov"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "ccb28c8b156e089b2e4acc61f08afa261c810c903c9a2db663341e2ce3449d40"
+content-hash = "be410225c43f3aa7416f08d92b9794927d0ec2dfe83288f15d7b786d24255ca3"
