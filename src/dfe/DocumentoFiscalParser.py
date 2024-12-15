@@ -13,6 +13,7 @@ class DocumentoFiscalParser:
             'nfse': 'http://www.abrasf.org.br/nfse.xsd',    # NFS-e namespace
             'cte': 'http://www.portalfiscal.inf.br/cte',    # CT-e namespace
             'mdfe': 'http://www.portalfiscal.inf.br/mdfe',  # MDF-e namespace
+            'ds': 'http://www.w3.org/2000/09/xmldsig#'
         }
         self._setup_logging()
 
@@ -129,7 +130,9 @@ class DocumentoFiscalParser:
                 'MDF-e': self._processar_nfe, # Similar structure to NF-e
                 'NFS-e': self._processar_nfse,
                 'Evento': self._processar_evento,
-                'procEvento': self._processar_proc_evento
+                'procEventoNFe': self._processar_proc_evento,
+                'procEventoCTe': self._processar_proc_eventoCTeMDFe,
+                'procEventoMDFe': self._processar_proc_eventoCTeMDFe
             }
             
             processor = processors.get(tipo_documento)
@@ -151,7 +154,7 @@ class DocumentoFiscalParser:
         """Parse XML string into ElementTree."""
         logging.debug("Interpretando o XML fornecido.")
 
-        xml_str = StringUtils.remover_caracteres(xml_string,'<','>')
+        #xml_str = StringUtils.remover_caracteres(xml_string,'<','>')
 
         return ET.fromstring(xml_string)
 
@@ -161,9 +164,9 @@ class DocumentoFiscalParser:
         tag = root.tag.lower()
         
         tipo_mapping = {
-            'proceventonfe': 'procEvento',
-            'proceventocte': 'procEvento',
-            'proceventomdfe': 'procEvento',
+            'proceventonfe': 'procEventoNFe',
+            'proceventocte': 'procEventoCTe',
+            'proceventomdfe': 'procEventoMDFe',
             'eventoproc': 'Evento',
             'evento': 'Evento',
             'cteproc': 'CT-e',
@@ -303,6 +306,8 @@ class DocumentoFiscalParser:
                 'proceventomdfe': 'mdfe'
             }
 
+            
+
             ns_lookup = root.tag.lower().split('}')[-1]
 
             ns = ns_map.get(ns_lookup, None)
@@ -362,6 +367,80 @@ class DocumentoFiscalParser:
         except Exception as e:
             logging.exception("Erro inesperado ao processar procEvento")
             return {'erro': f'Erro inesperado ao processar procEvento: {str(e)}'}
+
+    def _processar_proc_eventoCTeMDFe(self, root: ET.Element, tipo_documento: str) -> Dict[str, Any]:
+        """
+        Processa os eventos de CTe e MDFe
+        Args:
+            xml_string: String contendo o XML do evento
+        Returns:
+            Dictionary com as informações processadas ou None em caso de erro
+        """
+        try:
+            # Parse do XML
+            #root = ET.fromstring(xml_string)
+            
+            # Determinar o tipo de documento baseado no namespace
+            root_tag = root.tag.split('}')[1] if '}' in root.tag else root.tag
+            namespace = None
+            
+            if 'procEventoCTe' in root_tag:
+                namespace = self.namespaces['cte']
+            elif 'procEventoMDFe' in root_tag:
+                namespace = self.namespaces['mdfe']
+            else:
+                raise ValueError(f"Tipo de documento não suportado: {root_tag}")
+
+            # Criar namespace map para as buscas
+            nsmap = {'ns': namespace}
+
+            # Extrair informações do evento
+            info_evento = root.find('.//ns:infEvento', nsmap)
+            if info_evento is None:
+                raise ValueError("infEvento não encontrado no XML")
+
+            # Extrair informações do evento detalhado
+            det_evento = info_evento.find('.//ns:detEvento', nsmap)
+            if det_evento is None:
+                raise ValueError("detEvento não encontrado no XML")
+
+            # Extrair informações do retorno
+            ret_evento = root.find('.//ns:retEventoCTe', nsmap) if 'cte' in namespace else root.find('.//ns:retEventoMDFe', nsmap)
+            if ret_evento is None:
+                raise ValueError("retEvento não encontrado no XML")
+
+            # Montar dicionário com as informações
+            resultado = {
+                'tipo_documento': 'CTE' if 'cte' in namespace else 'MDFE',
+                'chave': info_evento.findtext('ns:chCTe', namespaces=nsmap) or info_evento.findtext('ns:chMDFe', namespaces=nsmap),
+                'tipo_evento': info_evento.findtext('ns:tpEvento', namespaces=nsmap),
+                'sequencia_evento': info_evento.findtext('ns:nSeqEvento', namespaces=nsmap),
+                'data_evento': info_evento.findtext('ns:dhEvento', namespaces=nsmap),
+                'status': ret_evento.findtext('.//ns:cStat', namespaces=nsmap),
+                'motivo': ret_evento.findtext('.//ns:xMotivo', namespaces=nsmap),
+                'protocolo': ret_evento.findtext('.//ns:nProt', namespaces=nsmap),
+                'data_registro': ret_evento.findtext('.//ns:dhRegEvento', namespaces=nsmap)
+            }
+
+            # Processar informações específicas do detEvento
+            if det_evento is not None:
+                # Para eventos de MDFe autorizado em CTe
+                mdfe_info = det_evento.find('.//ns:MDFe', nsmap)
+                if mdfe_info is not None:
+                    resultado['mdfe'] = {
+                        'chave': mdfe_info.findtext('ns:chMDFe', namespaces=nsmap),
+                        'protocolo': mdfe_info.findtext('ns:nProt', namespaces=nsmap),
+                        'data_recebimento': mdfe_info.findtext('ns:dhRecbto', namespaces=nsmap)
+                    }
+
+            return resultado
+
+        except ET.ParseError as e:
+            logging.error(f"Erro ao fazer parse do XML: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Erro ao processar evento: {e}")
+            return None
 
     def _extrair_destinatario(self, root: ET.Element, ns: str) -> Optional[str]:
         """Extract recipient identification (CNPJ or CPF) from document."""

@@ -105,8 +105,8 @@ class SiegApiHandler:
 
                 parserDFe = DocumentoFiscalParser()
                 resultado = parserDFe.parse_documento_fiscal_string(texto_decodificado)
-                print(resultado)
-                continue
+                #print(resultado)
+                #continue
 
                 file_name = GerenciadorArquivos.gerar_nome_arquivo_temp(str(contador),"xml")
                 file_path = os.path.join(output_dir, file_name)
