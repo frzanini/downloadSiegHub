@@ -60,8 +60,8 @@ class SiegApiHandler:
             "XmlType": xml_type,
             "Take": take,
             "Skip": skip,
-            "DataEmissaoInicio": data_emissao_inicio.strftime("%Y-%m-%dT00:00:00.000Z"),
-            "DataEmissaoFim": data_emissao_fim.strftime("%Y-%m-%dT23:59:59.999Z"),
+            "DataEmissaoInicio": data_emissao_inicio.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
+            "DataEmissaoFim": data_emissao_fim.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
             "Downloadevent": True
         }
         logging.debug(f"Payload construído: {payload}")
@@ -73,7 +73,7 @@ class SiegApiHandler:
         """
         url = f"{self.base_url}?api_key={self.api_key}"
         logging.info(f"Enviando requisição para URL: {url}")
-        logging.debug(f"Payload: {payload}")
+        logging.info(f"Payload: {payload}")
 
         try:
             response = requests.post(url, json=payload)
@@ -96,22 +96,46 @@ class SiegApiHandler:
             raise ValueError("Dados fornecidos não são um JSON válido.")
 
         os.makedirs(output_dir, exist_ok=True)
+        #output_dir2 = output_dir+"eventos"
+        #os.makedirs(output_dir+"\\eventos", exist_ok=True)
+
         contador = 1
 
         for item in data:
             try:
-                decoded_content = base64.b64decode(item)
-                texto_decodificado = decoded_content.decode('utf-8')
+
+                local_dir = output_dir
+                #decoded_content = base64.b64decode(item)
+                texto_decodificado = base64.b64decode(item).decode('utf-8')
 
                 parserDFe = DocumentoFiscalParser()
                 resultado = parserDFe.parse_documento_fiscal_string(texto_decodificado)
+
+                if "cnpj_emitente" in resultado :
+                    local_dir = f"{output_dir}\\{resultado["cnpj_emitente"]}"
+                    os.makedirs(local_dir, exist_ok=True)
+                    os.makedirs(local_dir+"\\eventos", exist_ok=True)
+
                 #print(resultado)
                 #continue
+                file_name = ""
+                if not isinstance(resultado, dict) or "erro" in resultado:
+                    file_name = GerenciadorArquivos.gerar_nome_arquivo_temp(str(contador),"xml")
+                    logging.error(f"Arquivo sem parse: {file_name}")
+                    #resultado['isevent'] = '1'
+                elif "isevent" in resultado:
+                    if resultado['isevent'] == '1':
+                        file_name = f"{resultado["chave_acesso"]}_{resultado["tipo_documento"]}_{resultado["tipo_evento"]}_{resultado["sequencia_evento"]}.xml"
+                        file_path = os.path.join(local_dir+"\\eventos", file_name)
+                    else:
+                        file_name = file_name = f"{resultado["chave_acesso"]}_{resultado["tipo_documento"]}.xml"
+                        file_path = os.path.jodin(local_dir, file_name)
+                else:
+                    file_name = file_name = f"{resultado["chave_acesso"]}_{resultado["tipo_documento"]}.xml"
+                    file_path = os.path.join(local_dir, file_name)
 
-                file_name = GerenciadorArquivos.gerar_nome_arquivo_temp(str(contador),"xml")
-                file_path = os.path.join(output_dir, file_name)
                 with open(file_path, "wb") as xml_file:
-                    xml_file.write(decoded_content)
+                    xml_file.write(texto_decodificado.encode("utf-8"))
                 logging.info(f"Arquivo salvo com sucesso: {file_path}")
                 contador += 1
             except (base64.binascii.Error, TypeError) as e:
@@ -127,22 +151,43 @@ class SiegApiHandler:
             current_date = start_date + timedelta(days=day_offset)
             logging.info(f"Processando dia {current_date}...")
 
-            output_dir = os.path.join(
+            main_dir = os.path.join(
                 os.getcwd(), "temp", str(current_date.year), 
                 f"{current_date.month:02}", f"{current_date.day:02}"
             )
 
-            os.makedirs(output_dir, exist_ok=True)
+            os.makedirs(main_dir, exist_ok=True)
 
             for xml_type in XmlType:
-                payload = self._build_payload(xml_type.value, data_emissao_inicio=current_date, data_emissao_fim=current_date)
-                logging.debug(f"Payload para {xml_type.name}: {payload}")
 
-                time.sleep(3)
-                base64_data = self.get_base64_data(payload)
-                if base64_data:
-                    self.process_and_save_base64(base64_data, output_dir)
-                else:
-                    logging.info(f"Nenhum dado encontrado para {current_date} e tipo {xml_type.name}.")
+                output_dir = os.path.join(main_dir, xml_type.name)
+                os.makedirs(output_dir, exist_ok=True)
+
+                # Início do horário em 00:00
+                hora_atual = datetime.strptime("00:00", "%H:%M")
+                intervalo = timedelta(hours=1) ## NA VERDADE SÃO 2, MINUTOS=59 SEGUNDOS=59
+
+                # Laço para gerar 12 intervalos
+                for i in range(12):
+                    #hora_inicio = hora_atual.strptime("00:00", "%H:%M")  # Formata a hora de início
+                    #hora_fim = (hora_atual + intervalo - timedelta(minutes=1)).strptime("00:00", "%H:%M")  # Hora final ajustada para 23:59 no último minuto
+                    #logging.info(f"Intervalo {i+1}: {hora_inicio} - {hora_fim}")
+
+                    # Concatena as horas à data_base usando replace
+                    data_hora_inicio = current_date.replace(hour=hora_atual.hour, minute=hora_atual.minute, second=0)
+                    data_hora_fim = current_date.replace(hour=(hora_atual + intervalo).hour, minute=59, second=59)
+    
+                    payload = self._build_payload(xml_type.value, data_emissao_inicio=data_hora_inicio, data_emissao_fim=data_hora_fim)
+                    logging.info(f"Payload para {xml_type.name}: {payload}")
+
+                    time.sleep(3)
+                    base64_data = self.get_base64_data(payload)
+                    if base64_data:
+                        self.process_and_save_base64(base64_data, output_dir)
+                    else:
+                        logging.info(f"Nenhum dado encontrado para {data_hora_inicio} e {data_hora_fim} e tipo {xml_type.name}.")
+
+                    # Incrementa o horário em 2 horas
+                    hora_atual += intervalo
 
 

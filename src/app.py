@@ -22,7 +22,7 @@ api_handler = SiegApiHandler()
 data_inicio = datetime(2024, 12, 9)
 data_fim = datetime(2024, 12, 10)
 
-api_handler.download_xmls(data_inicio, data_fim)
+#api_handler.download_xmls(data_inicio, data_fim)
 
 
 # Exemplo de uso
@@ -32,5 +32,5 @@ if __name__ == "__main__":
     data_inicio = datetime(2024, 12, 9)
     data_fim = datetime(2024, 12, 10)
 
-    #api_handler.download_xmls(data_inicio, data_fim)
+    api_handler.download_xmls(data_inicio, data_fim)
     logging.info("Execução concluída.")
