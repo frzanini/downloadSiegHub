@@ -587,6 +587,16 @@ class DocumentoFiscalParser:
             if data_emissao is None:
                 raise ValueError(f"Data de emissão não encontrada no {tipo_documento}")
 
+            # Extract total value and ICMS values
+            valor_total_nota = root.find(f'.//{ns}:total/{ns}:ICMSTot/{ns}:vNF', namespaces)
+            if valor_total_nota is None:
+                raise ValueError(f"Valor total da nota não encontrado no {tipo_documento}")
+
+            valor_total_icms = root.find(f'.//{ns}:total/{ns}:ICMSTot/{ns}:vICMS', namespaces)
+            if valor_total_icms is None:
+                raise ValueError(f"Valor total de ICMS não encontrado no {tipo_documento}")
+
+
             return self._formatar_saida(tipo_documento, cnpj_emitente.text, destinatario, chave_acesso, data_emissao.text)
 
         except AttributeError as e:
