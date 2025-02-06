@@ -115,6 +115,8 @@ class SiegApiHandler:
                     local_dir = f"{output_dir}\\{resultado["cnpj_emitente"]}"
                     os.makedirs(local_dir, exist_ok=True)
                     os.makedirs(local_dir+"\\eventos", exist_ok=True)
+                else:
+                    continue
 
                 #print(resultado)
                 #continue
@@ -133,11 +135,15 @@ class SiegApiHandler:
                 else:
                     file_name = file_name = f"{resultado["chave_acesso"]}_{resultado["tipo_documento"]}.xml"
                     file_path = os.path.join(local_dir, file_name)
+                try:
 
-                with open(file_path, "wb") as xml_file:
-                    xml_file.write(texto_decodificado.encode("utf-8"))
-                logging.info(f"Arquivo salvo com sucesso: {file_path}")
-                contador += 1
+                    with open(file_path, "wb") as xml_file:
+                        xml_file.write(texto_decodificado.encode("utf-8"))
+                    logging.info(f"Arquivo salvo com sucesso: {file_path}")
+                    contador += 1
+                except OSError as e:
+                    logging.error(f"Erro ao salvar o arquivo: {e}")
+                    #logging.error(f"Erro ao salvar o arquivo: {xml_file}")
             except (base64.binascii.Error, TypeError) as e:
                 # Registrar o tipo de erro e a mensagem associada
                 logging.warning(f"Erro ao decodificar o item na posição {contador}: {type(e).__name__} - {e}")
@@ -160,12 +166,16 @@ class SiegApiHandler:
 
             for xml_type in XmlType:
 
+                # if xml_type != XmlType.NFE:
+                #     continue
+
                 output_dir = os.path.join(main_dir, xml_type.name)
                 os.makedirs(output_dir, exist_ok=True)
 
                 # Início do horário em 00:00
                 hora_atual = datetime.strptime("00:00", "%H:%M")
-                intervalo = timedelta(hours=1) ## NA VERDADE SÃO 2, MINUTOS=59 SEGUNDOS=59
+                intervalo2 = timedelta(hours=2) ## NA VERDADE SÃO 2, MINUTOS=59 SEGUNDOS=59
+                intervalo1 = timedelta(hours=1)
 
                 # Laço para gerar 12 intervalos
                 for i in range(12):
@@ -175,7 +185,7 @@ class SiegApiHandler:
 
                     # Concatena as horas à data_base usando replace
                     data_hora_inicio = current_date.replace(hour=hora_atual.hour, minute=hora_atual.minute, second=0)
-                    data_hora_fim = current_date.replace(hour=(hora_atual + intervalo).hour, minute=59, second=59)
+                    data_hora_fim = current_date.replace(hour=(hora_atual + intervalo1).hour, minute=59, second=59)
     
                     payload = self._build_payload(xml_type.value, data_emissao_inicio=data_hora_inicio, data_emissao_fim=data_hora_fim)
                     logging.info(f"Payload para {xml_type.name}: {payload}")
@@ -188,6 +198,6 @@ class SiegApiHandler:
                         logging.info(f"Nenhum dado encontrado para {data_hora_inicio} e {data_hora_fim} e tipo {xml_type.name}.")
 
                     # Incrementa o horário em 2 horas
-                    hora_atual += intervalo
+                    hora_atual += intervalo2
 
 

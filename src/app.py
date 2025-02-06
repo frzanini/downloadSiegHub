@@ -29,8 +29,8 @@ data_fim = datetime(2024, 12, 10)
 if __name__ == "__main__":
     logging.info("Iniciando execução do script.")
     api_handler = SiegApiHandler()
-    data_inicio = datetime(2024, 12, 9)
-    data_fim = datetime(2024, 12, 10)
+    data_inicio = datetime(2024, 10, 1)
+    data_fim = datetime(2024, 12, 31)
 
     api_handler.download_xmls(data_inicio, data_fim)
     logging.info("Execução concluída.")

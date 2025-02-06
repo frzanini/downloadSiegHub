@@ -27,6 +27,21 @@ astroid = ["astroid (>=2,<4)"]
 test = ["astroid (>=2,<4)", "pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
+name = "briefer"
+version = "0.0.14"
+description = "Python notebooks and dashboards in a single place. Create powerful and flexible dashboards using code, or build beautiful Notion-like notebooks and share them with your team."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "briefer-0.0.14-py3-none-any.whl", hash = "sha256:a2f421d89ac05d1b098bc1f3b07f92721d555239e446d9643fce0a48d47fa140"},
+    {file = "briefer-0.0.14.tar.gz", hash = "sha256:4f0d6732373eaebeea89ea33ebb58105d8f63325d87a0b6021828d83389b1e0b"},
+]
+
+[package.dependencies]
+docker = "*"
+requests = "*"
+
+[[package]]
 name = "certifi"
 version = "2024.8.30"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -303,6 +318,28 @@ files = [
     {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},
     {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
 ]
+
+[[package]]
+name = "docker"
+version = "7.1.0"
+description = "A Python library for the Docker Engine API."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "docker-7.1.0-py3-none-any.whl", hash = "sha256:c96b93b7f0a746f9e77d325bcfb87422a3d8bd4f03136ae8a85b37f1898d5fc0"},
+    {file = "docker-7.1.0.tar.gz", hash = "sha256:ad8c70e6e3f8926cb8a92619b832b4ea5299e2831c14284663184e200546fa6c"},
+]
+
+[package.dependencies]
+pywin32 = {version = ">=304", markers = "sys_platform == \"win32\""}
+requests = ">=2.26.0"
+urllib3 = ">=1.26.0"
+
+[package.extras]
+dev = ["coverage (==7.2.7)", "pytest (==7.4.2)", "pytest-cov (==4.1.0)", "pytest-timeout (==2.1.0)", "ruff (==0.1.8)"]
+docs = ["myst-parser (==0.18.0)", "sphinx (==5.1.1)"]
+ssh = ["paramiko (>=2.4.3)"]
+websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
 name = "executing"
@@ -1314,4 +1351,4 @@ test = ["pre-commit", "pytest", "pytest-benchmark", "pytest-cov"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "be410225c43f3aa7416f08d92b9794927d0ec2dfe83288f15d7b786d24255ca3"
+content-hash = "4d02834ff029b34992850ba530f750d4e72394224e55ad8556eff004fac560c8"
